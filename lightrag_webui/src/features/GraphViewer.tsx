@@ -20,6 +20,7 @@ import PropertiesView from '@/components/graph/PropertiesView'
 import SettingsDisplay from '@/components/graph/SettingsDisplay'
 import Legend from '@/components/graph/Legend'
 import LegendButton from '@/components/graph/LegendButton'
+import GraphChatPanel from '@/components/graph/GraphChatPanel'
 
 import { useSettingsStore } from '@/stores/settings'
 import { useGraphStore } from '@/stores/graph'
@@ -247,6 +248,8 @@ const GraphViewer = () => {
         </div> */}
 
         <SettingsDisplay />
+
+        <GraphChatPanel />
       </SigmaContainer>
 
       {/* Loading overlay - shown when data is loading or theme is switching */}

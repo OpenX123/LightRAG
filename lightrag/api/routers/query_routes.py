@@ -2,6 +2,7 @@
 This module contains all query-related routes for the LightRAG API.
 """
 
+import asyncio
 import json
 from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -665,65 +666,94 @@ def create_query_routes(rag, api_key: Optional[str] = None, top_k: int = 60):
             param = request.to_query_params(stream_mode)
 
             from fastapi.responses import StreamingResponse
+            from lightrag.progress import _progress_callback
 
-            # Unified approach: always use aquery_llm for all cases
-            result = await rag.aquery_llm(request.query, param=param)
+            # Use async queue to relay progress events before the LLM response
+            progress_queue = asyncio.Queue()
+
+            async def progress_callback(stage: str, message: str):
+                await progress_queue.put({"status": stage, "message": message})
+
+            async def run_query():
+                _progress_callback.set(progress_callback)
+                try:
+                    result = await rag.aquery_llm(request.query, param=param)
+                    await progress_queue.put({"_done": result})
+                except Exception as e:
+                    await progress_queue.put({"_error": str(e)})
+
+            query_task = asyncio.create_task(run_query())
 
             async def stream_generator():
-                # Extract references and LLM response from unified result
-                references = result.get("data", {}).get("references", [])
-                llm_response = result.get("llm_response", {})
+                result = None
+                try:
+                    while True:
+                        event = await progress_queue.get()
+                        if "_done" in event:
+                            result = event["_done"]
+                            break
+                        elif "_error" in event:
+                            yield f"{json.dumps({'error': event['_error']})}\n"
+                            return
+                        else:
+                            yield f"{json.dumps(event)}\n"
 
-                # Enrich references with chunk content if requested
-                if request.include_references and request.include_chunk_content:
-                    data = result.get("data", {})
-                    chunks = data.get("chunks", [])
-                    # Create a mapping from reference_id to chunk content
-                    ref_id_to_content = {}
-                    for chunk in chunks:
-                        ref_id = chunk.get("reference_id", "")
-                        content = chunk.get("content", "")
-                        if ref_id and content:
-                            # Collect chunk content
-                            ref_id_to_content.setdefault(ref_id, []).append(content)
+                    # Extract references and LLM response from unified result
+                    references = result.get("data", {}).get("references", [])
+                    llm_response = result.get("llm_response", {})
 
-                    # Add content to references
-                    enriched_references = []
-                    for ref in references:
-                        ref_copy = ref.copy()
-                        ref_id = ref.get("reference_id", "")
-                        if ref_id in ref_id_to_content:
-                            # Keep content as a list of chunks (one file may have multiple chunks)
-                            ref_copy["content"] = ref_id_to_content[ref_id]
-                        enriched_references.append(ref_copy)
-                    references = enriched_references
+                    # Enrich references with chunk content if requested
+                    if request.include_references and request.include_chunk_content:
+                        data = result.get("data", {})
+                        chunks = data.get("chunks", [])
+                        # Create a mapping from reference_id to chunk content
+                        ref_id_to_content = {}
+                        for chunk in chunks:
+                            ref_id = chunk.get("reference_id", "")
+                            content = chunk.get("content", "")
+                            if ref_id and content:
+                                # Collect chunk content
+                                ref_id_to_content.setdefault(ref_id, []).append(content)
 
-                if llm_response.get("is_streaming"):
-                    # Streaming mode: send references first, then stream response chunks
-                    if request.include_references:
-                        yield f"{json.dumps({'references': references})}\n"
+                        # Add content to references
+                        enriched_references = []
+                        for ref in references:
+                            ref_copy = ref.copy()
+                            ref_id = ref.get("reference_id", "")
+                            if ref_id in ref_id_to_content:
+                                # Keep content as a list of chunks (one file may have multiple chunks)
+                                ref_copy["content"] = ref_id_to_content[ref_id]
+                            enriched_references.append(ref_copy)
+                        references = enriched_references
 
-                    response_stream = llm_response.get("response_iterator")
-                    if response_stream:
-                        try:
-                            async for chunk in response_stream:
-                                if chunk:  # Only send non-empty content
-                                    yield f"{json.dumps({'response': chunk})}\n"
-                        except Exception as e:
-                            logger.error(f"Streaming error: {str(e)}")
-                            yield f"{json.dumps({'error': str(e)})}\n"
-                else:
-                    # Non-streaming mode: send complete response in one message
-                    response_content = llm_response.get("content", "")
-                    if not response_content:
-                        response_content = "No relevant context found for the query."
+                    if llm_response.get("is_streaming"):
+                        # Streaming mode: send references first, then stream response chunks
+                        if request.include_references:
+                            yield f"{json.dumps({'references': references})}\n"
 
-                    # Create complete response object
-                    complete_response = {"response": response_content}
-                    if request.include_references:
-                        complete_response["references"] = references
+                        response_stream = llm_response.get("response_iterator")
+                        if response_stream:
+                            try:
+                                async for chunk in response_stream:
+                                    if chunk:  # Only send non-empty content
+                                        yield f"{json.dumps({'response': chunk})}\n"
+                            except Exception as e:
+                                logger.error(f"Streaming error: {str(e)}")
+                                yield f"{json.dumps({'error': str(e)})}\n"
+                    else:
+                        # Non-streaming mode: send complete response in one message
+                        response_content = llm_response.get("content", "")
+                        if not response_content:
+                            response_content = "No relevant context found for the query."
 
-                    yield f"{json.dumps(complete_response)}\n"
+                        # Create complete response object
+                        complete_response = {"response": response_content}
+                        if request.include_references:
+                            complete_response["references"] = references
+
+                        yield f"{json.dumps(complete_response)}\n"
+                finally:
+                    query_task.cancel()
 
             return StreamingResponse(
                 stream_generator(),

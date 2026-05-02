@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "Оновити дані графа поточної сторінки",
       "refreshingTooltip": "Оновлення даних..."
     },
-    "emptyGraph": "Порожньо (Спробуйте перезавантажити знову)"
+    "emptyGraph": "Порожньо (Спробуйте перезавантажити знову)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Open chat",
+      "queryMode": "Query mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

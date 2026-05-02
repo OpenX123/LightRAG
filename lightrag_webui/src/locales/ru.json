@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "Обновить данные графа текущей страницы",
       "refreshingTooltip": "Обновление данных..."
     },
-    "emptyGraph": "Пусто (попробуйте перезагрузить снова)"
+    "emptyGraph": "Пусто (попробуйте перезагрузить снова)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Open chat",
+      "queryMode": "Query mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

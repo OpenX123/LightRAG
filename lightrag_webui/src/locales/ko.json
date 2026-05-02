@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "현재 페이지 그래프 데이터 새로고침",
       "refreshingTooltip": "데이터 새로고침 중..."
     },
-    "emptyGraph": "데이터 없음(새로고침을 시도해보세요)"
+    "emptyGraph": "데이터 없음(새로고침을 시도해보세요)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Chat open",
+      "queryMode": "Query mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

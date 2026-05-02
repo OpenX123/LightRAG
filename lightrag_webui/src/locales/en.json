@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "Refresh current page graph data",
       "refreshingTooltip": "Refreshing data..."
     },
-    "emptyGraph": "Empty(Try Reload Again)"
+    "emptyGraph": "Empty(Try Reload Again)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Open Chat",
+      "queryMode": "Query Mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

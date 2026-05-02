@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "تحديث بيانات الرسم البياني للصفحة الحالية",
       "refreshingTooltip": "جارٍ تحديث البيانات..."
     },
-    "emptyGraph": "فارغ (حاول إعادة التحميل)"
+    "emptyGraph": "فارغ (حاول إعادة التحميل)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Open chat",
+      "queryMode": "Query mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

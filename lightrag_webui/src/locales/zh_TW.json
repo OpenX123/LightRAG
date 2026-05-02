@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "重新整理目前頁面圖形資料",
       "refreshingTooltip": "正在重新整理資料..."
     },
-    "emptyGraph": "無數據(請重載圖形數據)"
+    "emptyGraph": "無數據(請重載圖形數據)",
+    "chatPanel": {
+      "title": "對話",
+      "openChat": "開啟對話",
+      "queryMode": "查詢模式"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "現在のページのグラフデータを更新",
       "refreshingTooltip": "データを更新中..."
     },
-    "emptyGraph": "空（再読み込みをお試しください）"
+    "emptyGraph": "空（再読み込みをお試しください）",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Chat wo hiraku",
+      "queryMode": "Query mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

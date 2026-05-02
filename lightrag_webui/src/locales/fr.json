@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "Actualiser les données du graphe de la page actuelle",
       "refreshingTooltip": "Actualisation des données en cours..."
     },
-    "emptyGraph": "Vide (Essayez de recharger)"
+    "emptyGraph": "Vide (Essayez de recharger)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Ouvrir le chat",
+      "queryMode": "Mode de requete"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

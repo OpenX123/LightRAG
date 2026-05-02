@@ -5,6 +5,7 @@ from pathlib import Path
 import asyncio
 import json
 import json_repair
+import time
 from typing import Any, AsyncIterator, overload, Literal
 from collections import Counter, defaultdict
 
@@ -52,6 +53,7 @@ from lightrag.base import (
     QueryContextResult,
 )
 from lightrag.prompt import PROMPTS
+from lightrag.progress import emit_progress
 from lightrag.constants import (
     GRAPH_FIELD_SEP,
     DEFAULT_MAX_ENTITY_TOKENS,
@@ -68,7 +70,6 @@ from lightrag.constants import (
     DEFAULT_ENTITY_NAME_MAX_LENGTH,
 )
 from lightrag.kg.shared_storage import get_storage_keyed_lock
-import time
 from dotenv import load_dotenv
 
 # use the .env that is inside the current folder
@@ -3213,9 +3214,11 @@ async def kg_query(
         # Apply higher priority (5) to query relation LLM function
         use_model_func = partial(use_model_func, _priority=5)
 
+    await emit_progress("extracting_keywords", "Extracting keywords from query...")
     hl_keywords, ll_keywords = await get_keywords_from_query(
         query, query_param, global_config, hashing_kv
     )
+    await emit_progress("keywords_done", f"Keywords extracted: {len(hl_keywords)} high-level, {len(ll_keywords)} low-level")
 
     logger.debug(f"High-level keywords: {hl_keywords}")
     logger.debug(f"Low-level  keywords: {ll_keywords}")
@@ -3636,9 +3639,12 @@ async def _perform_kg_search(
 
         if texts_to_embed:
             try:
+                await emit_progress("embedding", f"Computing embeddings for {len(texts_to_embed)} text(s)...")
+                embed_start = time.perf_counter()
                 all_embeddings = await actual_embedding_func(
                     texts_to_embed, context="query", _priority=5
                 )
+                embed_elapsed = time.perf_counter() - embed_start
                 for i, purpose in enumerate(text_purposes):
                     if purpose == "query":
                         query_embedding = all_embeddings[i]
@@ -3651,6 +3657,7 @@ async def _perform_kg_search(
                     len(texts_to_embed),
                     ", ".join(text_purposes),
                 )
+                await emit_progress("embedding_done", f"Embeddings computed in {embed_elapsed:.2f}s")
             except Exception as e:
                 logger.warning(f"Failed to batch pre-compute embeddings: {e}")
 
@@ -4259,6 +4266,7 @@ async def _build_query_context(
         return None
 
     # Stage 1: Pure search
+    await emit_progress("searching", "Searching knowledge graph...")
     search_result = await _perform_kg_search(
         query,
         ll_keywords,
@@ -4308,6 +4316,7 @@ async def _build_query_context(
 
     # Stage 4: Build final LLM context with dynamic token processing
     # _build_context_str now always returns tuple[str, dict]
+    await emit_progress("building_context", "Building response context...")
     context, raw_data = await _build_context_str(
         entities_context=truncation_result["entities_context"],
         relations_context=truncation_result["relations_context"],

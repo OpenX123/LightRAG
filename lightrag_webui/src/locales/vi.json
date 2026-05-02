@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "Làm mới dữ liệu đồ thị trang hiện tại",
       "refreshingTooltip": "Đang làm mới dữ liệu..."
     },
-    "emptyGraph": "Trống (Thử Tải Lại)"
+    "emptyGraph": "Trống (Thử Tải Lại)",
+    "chatPanel": {
+      "title": "Chat",
+      "openChat": "Open chat",
+      "queryMode": "Query mode"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

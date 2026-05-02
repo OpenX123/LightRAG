@@ -371,7 +371,12 @@
       "refreshCurrentLabelTooltip": "刷新当前页面图数据",
       "refreshingTooltip": "正在刷新数据..."
     },
-    "emptyGraph": "无数据(请重载图形数据)"
+    "emptyGraph": "无数据(请重载图形数据)",
+    "chatPanel": {
+      "title": "对话",
+      "openChat": "打开对话",
+      "queryMode": "查询模式"
+    }
   },
   "retrievePanel": {
     "chatMessage": {

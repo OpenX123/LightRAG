@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ThemeProvider from '@/components/ThemeProvider'
 import TabVisibilityProvider from '@/contexts/TabVisibilityProvider'
 import ApiKeyAlert from '@/components/ApiKeyAlert'
@@ -9,7 +10,6 @@ import { useSettingsStore } from '@/stores/settings'
 import { getAuthStatus } from '@/api/lightrag'
 import SiteHeader from '@/features/SiteHeader'
 import { InvalidApiKeyError, RequireApiKeError } from '@/api/lightrag'
-import { ZapIcon } from 'lucide-react'
 
 import GraphViewer from '@/features/GraphViewer'
 import DocumentManager from '@/features/DocumentManager'
@@ -19,6 +19,10 @@ import ApiSite from '@/features/ApiSite'
 import { Tabs, TabsContent } from '@/components/ui/Tabs'
 
 function App() {
+  const [searchParams] = useSearchParams()
+  const isEmbed = searchParams.get('embed') === 'true'
+  const embedTab = searchParams.get('tab')
+
   const message = useBackendState.use.message()
   const enableHealthCheck = useSettingsStore.use.enableHealthCheck()
   const currentTab = useSettingsStore.use.currentTab()
@@ -149,6 +153,13 @@ function App() {
     checkVersion();
   }, []); // Empty dependency array ensures it only runs once on mount
 
+  // In embed mode, set initial tab from URL param
+  useEffect(() => {
+    if (isEmbed && embedTab) {
+      useSettingsStore.getState().setCurrentTab(embedTab as any)
+    }
+  }, [])
+
   const handleTabChange = useCallback(
     (tab: string) => useSettingsStore.getState().setCurrentTab(tab as any),
     []
@@ -168,23 +179,22 @@ function App() {
         {initializing ? (
           // Loading state while initializing with simplified header
           <div className="flex h-screen w-screen flex-col">
-            {/* Simplified header during initialization - matches SiteHeader structure */}
+            {/* Hide header in embed mode during initialization */}
+            {!isEmbed && (
             <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex h-10 w-full border-b px-4 backdrop-blur">
               <div className="min-w-[200px] w-auto flex items-center">
                 <a href={webuiPrefix} className="flex items-center gap-2">
-                  <ZapIcon className="size-4 text-emerald-400" aria-hidden="true" />
                   <span className="font-bold md:inline-block">{SiteInfo.name}</span>
                 </a>
               </div>
 
-              {/* Empty middle section to maintain layout */}
               <div className="flex h-10 flex-1 items-center justify-center">
               </div>
 
-              {/* Empty right section to maintain layout */}
               <nav className="w-[200px] flex items-center justify-end">
               </nav>
             </header>
+            )}
 
             {/* Loading indicator in content area */}
             <div className="flex flex-1 items-center justify-center">
@@ -198,11 +208,11 @@ function App() {
           // Main content after initialization
           <main className="flex h-screen w-screen overflow-hidden">
             <Tabs
-              defaultValue={currentTab}
+              defaultValue={isEmbed && embedTab ? embedTab : currentTab}
               className="!m-0 flex grow flex-col !p-0 overflow-hidden"
               onValueChange={handleTabChange}
             >
-              <SiteHeader />
+              {!isEmbed && <SiteHeader />}
               <div className="relative grow">
                 <TabsContent value="documents" className="absolute top-0 right-0 bottom-0 left-0 overflow-auto">
                   <DocumentManager />

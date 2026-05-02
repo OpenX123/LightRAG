@@ -516,7 +516,8 @@ export const queryText = async (request: QueryRequest): Promise<QueryResponse> =
 export const queryTextStream = async (
   request: QueryRequest,
   onChunk: (chunk: string) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
+  onStatus?: (status: string, message: string) => void
 ) => {
   const apiKey = useSettingsStore.getState().apiKey;
   const token = localStorage.getItem('LIGHTRAG-API-TOKEN');
@@ -672,6 +673,8 @@ export const queryTextStream = async (
             const parsed = JSON.parse(line);
             if (parsed.response) {
               onChunk(parsed.response);
+            } else if (parsed.status && onStatus) {
+              onStatus(parsed.status, parsed.message);
             } else if (parsed.error && onError) {
               onError(parsed.error);
             }
